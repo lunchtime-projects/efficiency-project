@@ -88,17 +88,22 @@ class Overall{
 		return (1 - ((amount / 50) - 1) ** 2);
 	}
 	popDecay(age){
-		return (age ** 2.3 / 400000);
+		return 1 - ((age - 4) ** 4 / 250000000);
 	}
 
 	agePopulation(){
-		let population = getValue('population');
-		for(let age = 0; age < population.length; age++){
+		let population = this.getValue('population');
+		for(let age = population.length - 1; age > 0; age--){
 			if(age !== 0){
-				population[age].amount = population[age - 1].amount * popDecay(age); // popDecay(age) -> will determine how many die from this age group ...
+				population[age].amount = parseInt(population[age - 1].amount * (this.popDecay(age))); // popDecay(age) -> will determine how many die from this age group ...
 			}
 		}
-		populaltion[0].amount = genBirths(); // genbirths can get all people between 16 and 40 and have a percent of those give birth (i.e x% of that range) x can be dependant upon health, employment, happiness, income blah blah (i.e higher income less likely to have children (counter intuative))
+		population[0].amount = this.genBirths(); // genbirths can get all people between 16 and 40 and have a percent of those give birth (i.e x% of that range) x can be dependant upon health, employment, happiness, income blah blah (i.e higher income less likely to have children (counter intuative))
+		this.setValue('population', population);
+	}
+
+	genBirths(){
+		return 755000;
 	}
 
 	getPopAbove(age){
@@ -240,5 +245,8 @@ class Overall{
 let newgame = new Overall(data);
 newgame.start();
 
-console.table(newgame.getPopulation());
-console.log(newgame.getTotalPopulation() * 1/1000000 + "m");
+window.setInterval(() => {
+	console.table(newgame.getPopulation());
+	console.log(newgame.getTotalPopulation() * 1/1000000 + "m");
+	newgame.agePopulation()
+}, 200)
