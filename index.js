@@ -3,24 +3,12 @@ NOTE:
 NOT ALL RULES ARE BASED ON CONCRETE FACT, BUT ARE UNIVERSAL TRUTHS FOR THESE SIMULATIONS (I.E PRIVATE SECTOR IS MORE PRODUCTIVE THAN PUBLIC SECTOR)
 */
 
-function setPopulation(){
-	let population = [];
-	// needs to be a bell curve
-	for(let i = 0; i < 100; i++){
-		population.push({
-			age: i,
-			amount: Math.random
-		})
-	}
-}
-const population = [
-	{
-		age: 0,
-		amount: 100
-	},
-];
-
 const data = {
+
+	//population
+	"population": [
+
+	],
 	"average_wage": 	15.40,		// average wage per hour 
 	"minimum_wage": 	6.50,		// minimum wage per hour
 	"working_hours": 	9,			// working hours per day
@@ -28,21 +16,21 @@ const data = {
 	"private_sector": 	32000000,	// total private sector employment
 	"birth_rate": 		1000, 		// births per day
 	"death_rate": 		850, 		// deaths per day
-	"productivity":  	3.4			// productivity (random low level float -> 2.dp)
+	"productivity":  	3.4,		// productivity (random low level float -> 2.dp)
 	"happiness": 		0.7,		// happiness (random low level float -> 2.dp)
-	"healh":  			0.8,		// health 0 to 1
+	"health":  			0.8,		// health 0 to 1
 	"education": 		0.7,		// education 0 to 1
 	"poverty":  		0.1, 		// poverty 0 to 1 (0 being no poverty, 1 being maximum)
 
 	//stats
 	"population_needing_welfare": 	2000000,		// this is determined by health and (un)employment
-	"tax_burden": 					0.9 			// 0 to 1, 1 being absolute burden, 0 being no tax burden
+	"tax_burden": 					0.9, 			// 0 to 1, 1 being absolute burden, 0 being no tax burden
 
 	// spending
-	"total_income": 				800000000000 	// Total income per year (800 bn per year default) (made up of all incomes)
+	"total_income": 				800000000000, 	// Total income per year (800 bn per year default) (made up of all incomes)
 
 	// expenditure
-	"total_expenditure": 			0				// sum of all other expenditures
+	"total_expenditure": 			0,				// sum of all other expenditures
 	"health_expenditure": 			0,
 	"education_expenditure": 		0,
 	"military_expenditure": 		0,
@@ -62,23 +50,48 @@ class Overall{
 		this.data = data;
 	}
 
-	private setValue(location, value){
+	start(){
+		this.setPopulation();
+	}
+
+	setValue(location, value){
 		this.data[location] = value;
 	}
 
-	private getValue(location){
+	getValue(location){
 		return this.data[location];
 	}
 
-	private setPopulation(){
-		const population = getValue('population');
+	setPopulation(){
+		let population = this.getValue('population');
+		const base = 610000;
+
+		for(let i = 0; i < 100; i++){
+			const pop = this.gen(i);
+			population.push({
+				age: i,
+				amount: parseInt((pop * base + base/ 23) + (base * (Math.random() / 10)))
+			})
+		}
 	}
 
-	private popDecay(age){
-		return (age ** 3 / 2000000);
+	getTotalPopulation(){
+		const population = this.getValue('population');
+		let sum = 0;
+		for(let i = 0; i < population.length; i++){
+			sum += population[i]['amount'];
+		}
+		return sum;
 	}
 
-	private agePopulation(){
+	gen(amount){
+		return (1 - ((amount / 50) - 1) ** 2);
+	}
+	popDecay(age){
+		return (age ** 2.3 / 400000);
+	}
+
+	agePopulation(){
 		let population = getValue('population');
 		for(let age = 0; age < population.length; age++){
 			if(age !== 0){
@@ -88,7 +101,7 @@ class Overall{
 		populaltion[0].amount = genBirths(); // genbirths can get all people between 16 and 40 and have a percent of those give birth (i.e x% of that range) x can be dependant upon health, employment, happiness, income blah blah (i.e higher income less likely to have children (counter intuative))
 	}
 
-	private getPopAbove(age){
+	getPopAbove(age){
 		const population = getValue('population');
 		let sum = 0;
 
@@ -101,7 +114,11 @@ class Overall{
 		return sum;
 	}
 
-	private getPopBetween(minAge, maxAge){
+	getPopulation(){
+		return this.getValue('population');
+	}
+
+	getPopBetween(minAge, maxAge){
 		const population = getValue('population');
 		let sum = 0;
 
@@ -114,7 +131,7 @@ class Overall{
 		return sum;
 	}
 
-	private calculateWelfareSpending(){
+	calculateWelfareSpending(){
 		const { welfare_pp, welfare_ease, population_needing_welfare } = this.data;
 
 		setValue('welfare_expenditure', welfare_pp * welfare_ease * population_needing_welfare);
@@ -124,7 +141,7 @@ class Overall{
 
 
 
-	private calculatePensionsSpending(){
+	calculatePensionsSpending(){
 
 		const { pension_pp, pension_age } = this.data;
 
@@ -137,7 +154,7 @@ class Overall{
 		return getValue('pension_expenditure');
 	}
 
-	private getSectorRatios(){
+	getSectorRatios(){
 
 		const { public_sector, private_sector } = this.data;
 
@@ -152,7 +169,7 @@ class Overall{
 		}
 	}
 
-	private getWageValues(){
+	getWageValues(){
 
 		const { average_wage, minimum_wage } = this.data;
 
@@ -165,7 +182,7 @@ class Overall{
 		}
 	}
 
-	private calculateHappiness(){
+	calculateHappiness(){
 
 		const {
 			working_hours,
@@ -180,7 +197,7 @@ class Overall{
 		happiness *= (1.5 * getWageValues().wage_ratio + 0.5);
 	}
 
-	private calculateProductivity(){
+	calculateProductivity(){
 
 		const { 
 			happiness,
@@ -213,9 +230,15 @@ class Overall{
 		this.setValue('productivity', productivity);
 	}
 
-	private update(){
+	update(){
 		calculateHappiness();
 		calculateProductivity();
 	}
 
 }
+
+let newgame = new Overall(data);
+newgame.start();
+
+console.table(newgame.getPopulation());
+console.log(newgame.getTotalPopulation() * 1/1000000 + "m");
